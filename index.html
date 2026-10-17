@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tonedot – Manga browser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#eceff3;--ink:#161c2b;--mute:#5b6478;--card:#fff;--line:#cfd5df;--accent:#2b46f5;--accent-ink:#fff;--dot:rgba(22,28,43,.13)}
+@media (prefers-color-scheme:dark){:root{--paper:#10141f;--ink:#e8ebf2;--mute:#9aa3b8;--card:#1a2032;--line:#2c344a;--accent:#7b8dff;--accent-ink:#10141f;--dot:rgba(232,235,242,.09)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.55 "Zen Kaku Gothic New",system-ui,sans-serif}
+header{background:radial-gradient(var(--dot) 1.4px,transparent 1.5px) 0 0/9px 9px;border-bottom:2px solid var(--ink);padding:2rem 1.25rem 0}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font:400 clamp(2.4rem,8vw,4.4rem)/.95 "Dela Gothic One",Impact,sans-serif;margin:0}
+.tag{margin:.6rem 0 0;color:var(--mute);max-width:46ch}
+.controls{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem -1.25rem 0;padding:.7rem 1.25rem;background:var(--paper);border-top:2px solid var(--ink)}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:.45rem .7rem}
+input{flex:1 1 220px;min-width:0}
+button:focus-visible,input:focus-visible,select:focus-visible,.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+main{padding:1.5rem 1.25rem 3rem}
+#status{color:var(--mute);margin:0 0 1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1.2rem}
+.card{background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.cover{aspect-ratio:2/3;border-radius:6px;background:var(--line) center/cover;border:2px solid var(--ink);position:relative;overflow:hidden;transition:transform .15s}
+.card:hover .cover{transform:translateY(-3px)}
+.score{position:absolute;right:6px;bottom:6px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.8rem;padding:.1rem .45rem;border-radius:4px}
+.card h3{font-size:.92rem;font-weight:700;line-height:1.3;margin:.5rem 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card p{margin:.1rem 0 0;font-size:.8rem;color:var(--mute)}
+.tg{font:700 .9rem inherit;font-family:inherit;border:2px solid var(--ink);background:var(--card);color:var(--ink);border-radius:8px;padding:.45rem .9rem;cursor:pointer}.tg[aria-pressed=true]{background:var(--ink);color:var(--paper)}.chlist button.read{opacity:.55}
+.sk .cover{animation:pulse 1.1s infinite alternate}@keyframes pulse{to{opacity:.45}}
+.more,.pri{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;font:700 .95rem inherit;font-family:inherit;padding:.6rem 1.3rem;cursor:pointer}
+.more{display:block;margin:2rem auto 0}
+dialog{width:min(760px,94vw);max-height:90vh;border:2px solid var(--ink);border-radius:10px;background:var(--card);color:var(--ink);padding:0;overflow:auto}
+dialog::backdrop{background:rgba(10,14,24,.65)}
+.d{display:grid;grid-template-columns:200px 1fr;gap:1.4rem;padding:1.4rem}
+.d img{width:100%;border-radius:6px;border:2px solid var(--ink)}
+h2{font:400 1.5rem/1.15 "Dela Gothic One",sans-serif;margin:0 0 .3rem}
+.facts,.hint{color:var(--mute);font-size:.88rem;margin:0 0 .8rem}
+.desc{white-space:pre-line;max-width:62ch;max-height:11rem;overflow:auto}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.9rem 0}
+.chips span{border:1.5px solid var(--ink);border-radius:99px;font-size:.78rem;padding:.1rem .65rem}
+.links{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
+.links a,.links button.alt,.rel button{color:var(--ink);background:none;border:2px solid var(--ink);border-radius:6px;padding:.35rem .8rem;font:700 .86rem inherit;font-family:inherit;text-decoration:none;cursor:pointer}
+.rel{margin-top:1rem}.rel h3{font-size:.95rem;margin:0 0 .4rem}.rel div{display:flex;flex-wrap:wrap;gap:.4rem}
+.x{position:sticky;top:0;float:right;margin:.6rem;background:var(--ink);color:var(--paper);border:0;border-radius:50%;width:2rem;height:2rem;font-size:1.1rem;cursor:pointer;z-index:3}
+#reader{width:min(860px,100vw);height:100vh;max-height:100vh;border-radius:0;margin:0 auto}
+.rbar{position:sticky;top:0;z-index:2;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;background:var(--card);border-bottom:2px solid var(--ink);padding:.6rem 3.2rem .6rem 1rem}
+.rbar b{flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbar button,.rbar label{border:2px solid var(--ink);background:none;color:var(--ink);border-radius:6px;padding:.25rem .7rem;font:700 .85rem inherit;font-family:inherit;cursor:pointer}
+.rbar button:disabled{opacity:.35;cursor:default}
+.rbody{padding:1.1rem 1.25rem 3rem}
+details{border:2px solid var(--ink);border-radius:8px;margin:.6rem 0}
+summary{cursor:pointer;font-weight:700;padding:.55rem .8rem}
+.chlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;padding:.2rem .8rem .8rem}
+.chlist button{display:flex;flex-direction:column;text-align:left;background:none;color:var(--ink);border:2px solid var(--line);border-radius:6px;padding:.4rem .7rem;font:inherit;font-size:.92rem;cursor:pointer}
+.chlist button.on{border-color:var(--accent);background:var(--line)}
+.chlist small{color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pages img{display:block;width:100%;min-height:260px;background:var(--line);margin:0 auto .2rem}
+.pages .bad{width:100%;padding:2rem;border:2px dashed var(--line);background:none;color:var(--ink);font:inherit;cursor:pointer}
+footer{padding:0 1.25rem 2rem;color:var(--mute);font-size:.82rem}
+@media (max-width:560px){.d{grid-template-columns:1fr}.d img{max-width:180px}}
+@media (prefers-reduced-motion:reduce){.cover,.sk .cover{transition:none;animation:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Tonedot</h1>
+<p class="tag">Browse manga, then read it here or jump to the official place to buy it.</p>
+<div class="controls">
+<button type="button" class="tg" id="lib" aria-pressed="false">Library</button>
+<input id="q" type="search" placeholder="Search manga" aria-label="Search manga">
+<select id="sort" aria-label="Sort by"><option value="TRENDING_DESC">Trending</option><option value="POPULARITY_DESC">Most popular</option><option value="SCORE_DESC">Top rated</option><option value="START_DATE_DESC">Newest</option></select>
+<select id="origin" aria-label="Origin"><option value="">All origins</option><option value="JP">Japan (manga)</option><option value="KR">Korea (manhwa)</option><option value="CN">China (manhua)</option></select>
+<select id="genre" aria-label="Genre"><option value="">All genres</option></select>
+</div></div></header>
+<main><div class="wrap">
+<p id="status" role="status" aria-live="polite">Loading…</p>
+<div class="grid" id="grid"></div>
+<button class="more" id="more" hidden>Show more</button>
+</div></main>
+<footer><div class="wrap">Info from the AniList API. Chapters are delivered by MangaDex, with credit to MangaDex and the scanlation groups. Tonedot has no ads and takes no payments.</div></footer>
+<dialog id="reader" aria-label="Manga reader"><button class="x" id="rclose" aria-label="Close reader">×</button><div id="rwrap"></div></dialog>
+<dialog id="dlg" aria-label="Title details"><button class="x" id="close" aria-label="Close">×</button><div class="d" id="detail"></div></dialog>
+<script>
+const MEDIA = `id title{romaji english} coverImage{large color} averageScore status chapters volumes format genres description(asHtml:false) siteUrl countryOfOrigin startDate{year} externalLinks{site url type}
+  relations{edges{relationType node{id type title{romaji english} format}}}`;
+const LIST = `query($page:Int,$search:String,$sort:[MediaSort],$country:CountryCode,$genre:String){
+  Page(page:$page,perPage:24){pageInfo{hasNextPage} media(type:MANGA,format_not_in:[NOVEL],search:$search,sort:$sort,countryOfOrigin:$country,genre:$genre,isAdult:false){${MEDIA}}}}`;
+const ONE = `query($id:Int){Media(id:$id,type:MANGA){${MEDIA}}}`;
+const saved = () => { try { return JSON.parse(localStorage.getItem("tonedot:lib") || "[]"); } catch { return []; } };
+const isSaved = id => saved().some(x => x.id === id);
+function toggleSave(m) { const l = saved(), i = l.findIndex(x => x.id === m.id); i >= 0 ? l.splice(i, 1) : l.unshift(m); try { localStorage.setItem("tonedot:lib", JSON.stringify(l)); } catch {} }
+const state = { lib: false, page: 1, search: "", sort: "TRENDING_DESC", country: "", genre: "", items: [], token: 0 };
+const $ = id => document.getElementById(id), sleep = ms => new Promise(r => setTimeout(r, ms));
+const grid = $("grid"), statusEl = $("status"), moreBtn = $("more"), dlg = $("dlg"), rd = $("reader"), rwrap = $("rwrap");
+function el(tag, props = {}, ...kids) { const n = document.createElement(tag); Object.assign(n, props); kids.forEach(k => k != null && n.append(k)); return n; }
+const title = m => m.title.english || m.title.romaji;
+const clean = s => (s || "No description yet.").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim();
+const pretty = s => (s || "").toLowerCase().replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+["Action","Adventure","Comedy","Drama","Fantasy","Horror","Mystery","Psychological","Romance","Sci-Fi","Slice of Life","Sports","Supernatural","Thriller"].forEach(g => $("genre").append(new Option(g, g)));
+
+async function ani(query, variables) { // AniList with retry on rate limit / network errors
+  for (let i = 0; i < 3; i++) {
+    try {
+      const res = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ query, variables }) });
+      if (res.status === 429 || res.status >= 500) { await sleep(1200 * (i + 1)); continue; }
+      const j = await res.json();
+      if (!j.data) throw new Error((j.errors && j.errors[0].message) || "AniList error");
+      return j.data;
+    } catch (e) { if (i === 2) throw e; await sleep(600 * (i + 1)); }
+  }
+}
+
+function skeletons(n) { for (let i = 0; i < n; i++) grid.append(el("div", { className: "card sk" }, el("div", { className: "cover" }))); }
+async function load(reset) {
+  const tk = ++state.token;
+  if (reset) { state.page = 1; state.items = []; grid.replaceChildren(); }
+  if (state.lib) {
+    state.items = saved(); grid.replaceChildren(); state.items.forEach((m, i) => grid.append(card(m, i)));
+    statusEl.textContent = state.items.length ? "" : "Nothing saved yet. Open a manga and press Save."; moreBtn.hidden = true; return;
+  }
+  statusEl.textContent = ""; moreBtn.hidden = true;
+  skeletons(8);
+  const v = { page: state.page, sort: [state.sort] };
+  if (state.search) { v.search = state.search; v.sort = ["SEARCH_MATCH"]; }
+  if (state.country) v.country = state.country;
+  if (state.genre) v.genre = state.genre;
+  try {
+    const data = await ani(LIST, v);
+    if (tk !== state.token) return;
+    grid.querySelectorAll(".sk").forEach(n => n.remove());
+    data.Page.media.forEach(m => { state.items.push(m); grid.append(card(m, state.items.length - 1)); });
+    statusEl.textContent = state.items.length ? "" : "No results. Try a different spelling, or clear the filters.";
+    moreBtn.hidden = !data.Page.pageInfo.hasNextPage;
+  } catch (e) {
+    if (tk !== state.token) return;
+    grid.querySelectorAll(".sk").forEach(n => n.remove());
+    statusEl.textContent = "Couldn’t reach AniList (" + e.message + "). Check your connection and try again.";
+  }
+}
+
+function card(m, i) {
+  const cover = el("div", { className: "cover" });
+  cover.style.backgroundImage = `url("${m.coverImage.large}")`;
+  if (m.coverImage.color) cover.style.backgroundColor = m.coverImage.color;
+  if (m.averageScore) cover.append(el("span", { className: "score" }, String(m.averageScore)));
+  const sub = [pretty(m.format), m.startDate.year].filter(Boolean).join(", ");
+  const b = el("button", { className: "card", type: "button" }, cover, el("h3", {}, title(m)), el("p", {}, sub));
+  b.addEventListener("click", () => openDetail(state.items[i]));
+  return b;
+}
+
+function openDetail(m) {
+  const count = [m.chapters ? m.chapters + " chapters" : "", m.volumes ? m.volumes + " volumes" : ""].filter(Boolean).join(", ");
+  const facts = [pretty(m.format), pretty(m.status), count, m.averageScore ? m.averageScore + "/100" : ""].filter(Boolean).join(", ");
+  const links = el("div", { className: "links" });
+  const rb = el("button", { type: "button", className: "pri" }, "Read here");
+  rb.addEventListener("click", () => { dlg.close(); openReader(m); });
+  links.append(rb);
+  const sv = el("button", { type: "button", className: "alt" }, isSaved(m.id) ? "Saved ✓" : "Save");
+  sv.addEventListener("click", () => { toggleSave(m); sv.textContent = isSaved(m.id) ? "Saved ✓" : "Save"; });
+  links.append(sv);
+  (m.externalLinks || []).filter(l => l.type !== "SOCIAL").slice(0, 5).forEach(l => links.append(Object.assign(el("a", {}, "Read on " + l.site), { href: l.url, target: "_blank", rel: "noopener noreferrer" })));
+  links.append(Object.assign(el("a", {}, "AniList"), { href: m.siteUrl, target: "_blank", rel: "noopener noreferrer" }));
+  const order = { PREQUEL: 0, SEQUEL: 1, PARENT: 2, SIDE_STORY: 3, SPIN_OFF: 4 };
+  const rel = (m.relations ? m.relations.edges : []).filter(e => e.node.type === "MANGA" && e.relationType in order).sort((a, b) => order[a.relationType] - order[b.relationType]);
+  const relBox = rel.length ? el("div", { className: "rel" }, el("h3", {}, "Seasons and related"), el("div", {}, ...rel.map(e => {
+    const b = el("button", { type: "button" }, pretty(e.relationType) + ": " + title(e.node));
+    b.addEventListener("click", async () => { b.disabled = true; try { openDetail((await ani(ONE, { id: e.node.id })).Media); } catch (x) { b.disabled = false; b.textContent = "Couldn’t load, try again"; } });
+    return b;
+  }))) : null;
+  const img = el("img", { alt: "Cover of " + title(m) }); img.src = m.coverImage.large;
+  $("detail").replaceChildren(img, el("div", {}, el("h2", {}, title(m)), el("p", { className: "facts" }, facts), el("p", { className: "desc" }, clean(m.description)), el("div", { className: "chips" }, ...m.genres.map(g => el("span", {}, g))), links, relBox));
+  if (!dlg.open) dlg.showModal();
+}
+
+/* ---- Reader ---- */
+const mdApi = async q => {
+  const r = await fetch("/api/mangadex?" + new URLSearchParams(q));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Server returned " + r.status);
+  return j;
+};
+const note = t => rwrap.replaceChildren(el("div", { className: "rbody" }, el("p", { className: "hint" }, t)));
+const progKey = id => "tonedot:" + id;
+let rs = null;
+
+async function openReader(m) {
+  note("Looking for chapters…");
+  if (!rd.open) rd.showModal();
+  try {
+    const d = await mdApi({ action: "chapters", al: m.id, title: m.title.english || m.title.romaji, alt: m.title.english ? m.title.romaji : "" });
+    rs = { m, d, cur: -1, saver: localStorage.getItem("tonedot:saver") === "1" };
+    listChapters();
+  } catch (e) { note("Couldn’t load chapters: " + e.message + ". Try again, or use the official links in the details."); }
+}
+
+function listChapters() {
+  const { d, m } = rs, last = localStorage.getItem(progKey(m.id));
+  const read = new Set(JSON.parse(localStorage.getItem("tonedot:read:" + m.id) || "[]"));
+  const groups = new Map(); // season (if detected) then volume
+  d.chapters.forEach((c, i) => {
+    const k = (d.seasons ? "Season " + c.s + " · " : "") + (c.vol ? "Volume " + c.vol : "No volume");
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(i);
+  });
+  const box = el("div", {});
+  const entries = [...groups];
+  if (rs.desc) { entries.reverse(); entries.forEach(e => e[1].reverse()); }
+  entries.forEach(([name, idxs], gi) => {
+    const det = el("details", { open: groups.size === 1 || (last ? idxs.includes(+last) : gi === 0) }, el("summary", {}, name + " (" + idxs.length + " chapters)"));
+    const list = el("div", { className: "chlist" });
+    idxs.forEach(i => {
+      const c = d.chapters[i];
+      const b = el("button", { type: "button", className: (String(i) === last ? "on " : "") + (read.has(i) ? "read" : "") }, "Ch. " + (c.ch || "?") + (c.title ? ": " + c.title : ""), el("small", {}, c.pages + " pages" + (c.group ? " · " + c.group : "")));
+      b.addEventListener("click", () => openChapter(i));
+      list.append(b);
+    });
+    det.append(list); box.append(det);
+  });
+  const rel = d.matched === "guess" ? " This match is a best guess, so check that it’s the right series." : "";
+  const body = el("div", { className: "rbody" }, el("h2", {}, title(m)),
+    el("p", { className: "hint" }, "Matched to “" + d.mdTitle + "” on MangaDex. " + d.chapters.length + " English chapters" + (groups.size > 1 ? " in " + groups.size + (d.seasons ? " seasons and volumes." : " volumes.") : ".") + rel),
+    last && d.chapters[last] ? Object.assign(el("button", { type: "button", className: "pri" }, "Continue: chapter " + (d.chapters[last].ch || "?")), { onclick: () => openChapter(+last) }) : null,
+    d.chapters.length ? Object.assign(el("button", { type: "button", className: "tg" }, rs.desc ? "Show oldest first" : "Show newest first"), { onclick: () => { rs.desc = !rs.desc; listChapters(); } }) : null,
+    d.chapters.length ? box : el("p", { className: "hint" }, "No readable chapters here. Many popular series are only available through official apps."),
+    el("p", { className: "hint" }, "Chapters come from MangaDex. Thanks to MangaDex and the scanlation groups."));
+  rwrap.replaceChildren(body);
+  rd.scrollTop = 0;
+}
+
+async function openChapter(i) {
+  const { d, m } = rs, c = d.chapters[i];
+  rs.cur = i;
+  localStorage.setItem(progKey(m.id), i);
+  const rk = "tonedot:read:" + m.id, rset = new Set(JSON.parse(localStorage.getItem(rk) || "[]")); rset.add(i); localStorage.setItem(rk, JSON.stringify([...rset]));
+  note("Loading pages…");
+  try {
+    const s = await mdApi({ action: "pages", id: c.id });
+    const bar = el("div", { className: "rbar" });
+    const btn = (t, fn, off) => { const b = el("button", { type: "button", disabled: !!off }, t); b.addEventListener("click", fn); return b; };
+    const sv = el("label", {}, el("input", { type: "checkbox", checked: rs.saver, style: "margin:0 .4rem 0 0" }), "Data saver");
+    sv.firstChild.addEventListener("change", e => { rs.saver = e.target.checked; localStorage.setItem("tonedot:saver", rs.saver ? "1" : "0"); openChapter(i); });
+    bar.append(btn("Chapters", listChapters), btn("Prev", () => openChapter(i - 1), !d.chapters[i - 1]), el("b", {}, title(m) + ", ch. " + (c.ch || "?")), btn("Next", () => openChapter(i + 1), !d.chapters[i + 1]), sv);
+    const pages = el("div", { className: "pages" });
+    const files = rs.saver ? s.saver : s.data;
+    files.forEach(f => pages.append(pageImg(s, f, rs.saver)));
+    rwrap.replaceChildren(bar, el("div", { className: "rbody" }, pages, d.chapters[i + 1] ? Object.assign(el("button", { type: "button", className: "pri" }, "Next chapter"), { onclick: () => openChapter(i + 1) }) : el("p", { className: "hint" }, "End of chapter. That’s the last one available.")));
+    rd.scrollTop = 0;
+  } catch (e) { note("Couldn’t load this chapter: " + e.message + ". Go back and try again."); }
+}
+
+function pageImg(s, f, saver, tries = 0) { // retry, then fall back to the smaller version, then offer a manual retry
+  const url = s.base + (saver ? "/data-saver/" : "/data/") + s.hash + "/" + f;
+  const img = el("img", { alt: "", loading: "lazy" });
+  img.onerror = () => {
+    if (tries < 2) { setTimeout(() => { img.src = "/api/image?u=" + encodeURIComponent(url) + "&r=" + tries; }, 700 * (tries + 1)); tries++; return; }
+    if (!saver) { const alt = s.saver[s.data.indexOf(f)]; if (alt) { saver = true; tries = 0; f = alt; return void (img.src = "/api/image?u=" + encodeURIComponent(s.base + "/data-saver/" + s.hash + "/" + f)); } }
+    const b = el("button", { type: "button", className: "bad" }, "This page didn’t load. Tap to retry.");
+    b.addEventListener("click", () => b.replaceWith(pageImg(s, f, saver)));
+    img.replaceWith(b);
+  };
+  img.src = "/api/image?u=" + encodeURIComponent(url);
+  return img;
+}
+document.addEventListener("keydown", e => {
+  if (!rd.open || !rs || rs.cur < 0 || e.target.matches("input,select")) return;
+  if (e.key === "ArrowRight" && rs.d.chapters[rs.cur + 1]) openChapter(rs.cur + 1);
+  if (e.key === "ArrowLeft" && rs.d.chapters[rs.cur - 1]) openChapter(rs.cur - 1);
+});
+$("rclose").addEventListener("click", () => rd.close());
+$("lib").addEventListener("click", e => { state.lib = !state.lib; e.currentTarget.setAttribute("aria-pressed", state.lib); load(true); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; load(true); });
+$("origin").addEventListener("change", e => { state.country = e.target.value; load(true); });
+$("genre").addEventListener("change", e => { state.genre = e.target.value; load(true); });
+let timer;
+$("q").addEventListener("input", e => { clearTimeout(timer); timer = setTimeout(() => { state.search = e.target.value.trim(); load(true); }, 400); });
+moreBtn.addEventListener("click", () => { state.page++; load(false); });
+$("close").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+load(true);
+</script>
+</body>
+</html>
